@@ -1,27 +1,27 @@
 // src/main/java/com/codezone/backend/config/SecurityConfig.java
 package com.codezone.backend.config;
 
-import com.codezone.backend.security.AuthEntryPointJwt; // NEW
-import com.codezone.backend.security.AuthTokenFilter; // NEW
-import com.codezone.backend.security.UserDetailsServiceImpl; // NEW
+import com.codezone.backend.security.AuthEntryPointJwt;
+import com.codezone.backend.security.AuthTokenFilter;
+import com.codezone.backend.security.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager; // NEW
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider; // NEW
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; // NEW
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // NEW
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy; // NEW
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // NEW
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Allows @PreAuthorize, @PostAuthorize, etc.
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -60,12 +60,15 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
+                // --- THIS IS THE FIX ---
+                // Allow health checks from the hosting platform to the root URL
+                .requestMatchers("/").permitAll() 
                 // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/gemini/**").permitAll()
                 .requestMatchers("/api/judge0/**").permitAll()
                 // Explicitly protected endpoints
-                .requestMatchers("/api/debug-problems/**").authenticated() // ADD THIS LINE
+                .requestMatchers("/api/debug-problems/**").authenticated()
                 // All other requests require authentication
                 .anyRequest().authenticated()
             );
@@ -75,4 +78,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-}   
+}
